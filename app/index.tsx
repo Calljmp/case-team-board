@@ -1,10 +1,9 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { SafeAreaView, Text, View } from "react-native";
 
 export default function SplashScreen() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     checkAuthenticationStatus();
@@ -26,8 +25,6 @@ export default function SplashScreen() {
     } catch (error) {
       console.error("Initialization error:", error);
       router.replace("/login");
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -1,4 +1,9 @@
-import { UserAuthenticationPolicy } from "@calljmp/react-native";
+import {
+  ServiceError,
+  ServiceErrorCode,
+  UserAuthenticationPolicy,
+} from "@calljmp/react-native";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -17,10 +22,12 @@ import calljmp from "../common/calljmp";
  * Supports both sign-in and registration with the same form
  */
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("jonny@test.com");
+  const [password, setPassword] = useState("Hj#137163$");
+  const [isSigning, setIsSigning] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -28,23 +35,36 @@ export default function LoginScreen() {
       return;
     }
 
-    setIsLoading(true);
+    setIsSigning(true);
     setError("");
 
     try {
-      const result = await calljmp.users.auth.email.authenticate({
-        email,
-        password,
-        tags: ["role:user"],
-        policy: UserAuthenticationPolicy.SignInExistingOnly,
-      });
+      const { data: user, error } = await calljmp.users.auth.email.authenticate(
+        {
+          email,
+          password,
+          tags: ["role:user"],
+          policy: UserAuthenticationPolicy.SignInExistingOnly,
+        }
+      );
 
-      console.log("Sign in successful:", result);
+      if (error) {
+        throw error;
+      }
+
+      router.replace("/board");
     } catch (err) {
-      setError("Invalid email or password");
-      console.error("Sign in error:", err);
+      if (err instanceof ServiceError) {
+        if (err.code === ServiceErrorCode.UserNotFound) {
+          setError("User not found. Please register first.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Failed to sign in. Please try again.");
+      }
     } finally {
-      setIsLoading(false);
+      setIsSigning(false);
     }
   };
 
@@ -54,23 +74,36 @@ export default function LoginScreen() {
       return;
     }
 
-    setIsLoading(true);
+    setIsRegistering(true);
     setError("");
 
     try {
-      const result = await calljmp.users.auth.email.authenticate({
-        email,
-        password,
-        tags: ["role:user"],
-        policy: UserAuthenticationPolicy.CreateNewOnly,
-      });
+      const { data: user, error } = await calljmp.users.auth.email.authenticate(
+        {
+          email,
+          password,
+          tags: ["role:user"],
+          policy: UserAuthenticationPolicy.CreateNewOnly,
+        }
+      );
 
-      console.log("Registration successful:", result);
+      if (error) {
+        throw error;
+      }
+
+      router.replace("/board");
     } catch (err) {
-      setError("Registration failed. Please try again.");
-      console.error("Registration error:", err);
+      if (err instanceof ServiceError) {
+        if (err.code === ServiceErrorCode.UserAlreadyExists) {
+          setError("User already exists. Please log in.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Failed to register. Please try again.");
+      }
     } finally {
-      setIsLoading(false);
+      setIsRegistering(false);
     }
   };
 
@@ -149,7 +182,7 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                editable={!isLoading}
+                editable={!isSigning}
               />
             </View>
 
@@ -179,7 +212,7 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                editable={!isLoading}
+                editable={!isSigning}
               />
             </View>
 
@@ -204,15 +237,15 @@ export default function LoginScreen() {
                 marginBottom: 12,
                 alignItems: "center",
                 backgroundColor: "#0b77e6",
-                opacity: isLoading ? 0.6 : 1,
+                opacity: isSigning ? 0.6 : 1,
               }}
               onPress={handleSignIn}
-              disabled={isLoading}
+              disabled={isSigning || isRegistering}
             >
               <Text
                 style={{ color: "#ffffff", fontSize: 16, fontWeight: "500" }}
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isSigning ? "Signing In..." : "Sign In"}
               </Text>
             </TouchableOpacity>
 
@@ -226,15 +259,15 @@ export default function LoginScreen() {
                 backgroundColor: "#28e2ad",
                 borderWidth: 1,
                 borderColor: "#28e2ad",
-                opacity: isLoading ? 0.6 : 1,
+                opacity: isSigning ? 0.6 : 1,
               }}
               onPress={handleRegister}
-              disabled={isLoading}
+              disabled={isSigning || isRegistering}
             >
               <Text
                 style={{ color: "#ffffff", fontSize: 16, fontWeight: "500" }}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isRegistering ? "Creating Account..." : "Create Account"}
               </Text>
             </TouchableOpacity>
           </View>
