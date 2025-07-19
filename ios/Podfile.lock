@@ -1,6 +1,6 @@
 PODS:
   - boost (1.84.0)
-  - Calljmp (0.0.32):
+  - Calljmp (0.0.35):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2388,7 +2388,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  Calljmp: 60bc3675e899428f64f0f9974fb701b91301d20e
+  Calljmp: 57c36840f21cf18fa4ff28d4f1380dd58379169c
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: be238322d57d084dc055dbd5d6fe6479510504ce
   Expo: 32b8123c67a2960a0d49eeef6aecab18d5601cee

@@ -1,10 +1,10 @@
+import { Reaction } from "@/common/types";
 import React, { useEffect, useRef } from "react";
 import { Animated, Text } from "react-native";
-import { ReactionEvent } from "../data/mockData";
 
 interface AnimatedReactionProps {
-  reaction: ReactionEvent;
-  onAnimationComplete: (reaction: ReactionEvent) => void;
+  reaction: Reaction;
+  onAnimationComplete: (reaction: Reaction) => void;
 }
 
 /**
@@ -16,7 +16,7 @@ export default function AnimatedReaction({
   onAnimationComplete,
 }: AnimatedReactionProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const pulseAnimation = Animated.loop(
@@ -49,9 +49,9 @@ export default function AnimatedReaction({
     };
   }, []);
 
-  const formatReactionText = (reaction: ReactionEvent) => {
-    const emoji = reaction.reaction === "heart" ? "❤️" : "👍";
-    return `${emoji} ${reaction.userName}`;
+  const formatReactionText = (reaction: Reaction) => {
+    const emoji = reaction.type === "heart" ? "❤️" : "👍";
+    return `${emoji}`;
   };
 
   return (

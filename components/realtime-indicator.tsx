@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Reaction, TypingIndicator } from "@/common/types";
+import React, { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
-import { ReactionEvent, TypingIndicator } from "../data/mockData";
 import AnimatedReaction from "./animated-reaction";
 import TypingIndicatorComponent from "./typing-indicator";
 
 interface RealtimeIndicatorProps {
   typingIndicators: TypingIndicator[];
-  recentReactions: ReactionEvent[];
+  recentReactions: Reaction[];
 }
 
 /**
@@ -17,9 +17,7 @@ export default function RealtimeIndicator({
   typingIndicators,
   recentReactions,
 }: RealtimeIndicatorProps) {
-  const [displayedReactions, setDisplayedReactions] = useState<ReactionEvent[]>(
-    []
-  );
+  const [displayedReactions, setDisplayedReactions] = useState<Reaction[]>([]);
 
   // Handle new reactions
   useEffect(() => {
@@ -30,15 +28,15 @@ export default function RealtimeIndicator({
   }, [recentReactions, displayedReactions.length]);
 
   const handleReactionAnimationComplete = useCallback(
-    (completedReaction: ReactionEvent) => {
+    (completedReaction: Reaction) => {
       setDisplayedReactions((prev) =>
         prev.filter(
           (reaction) =>
             !(
               reaction.postId === completedReaction.postId &&
               reaction.userId === completedReaction.userId &&
-              reaction.timestamp.getTime() ===
-                completedReaction.timestamp.getTime()
+              reaction.createdAt.getTime() ===
+                completedReaction.createdAt.getTime()
             )
         )
       );
@@ -56,6 +54,7 @@ export default function RealtimeIndicator({
 
   return (
     <View
+      pointerEvents="none"
       style={{
         position: "absolute",
         bottom: 48,
@@ -70,7 +69,7 @@ export default function RealtimeIndicator({
         <AnimatedReaction
           key={`${reaction.postId}-${
             reaction.userId
-          }-${reaction.timestamp.getTime()}-${index}`}
+          }-${reaction.createdAt.getTime()}-${index}`}
           reaction={reaction}
           onAnimationComplete={handleReactionAnimationComplete}
         />

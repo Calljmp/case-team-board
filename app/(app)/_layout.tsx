@@ -1,44 +1,23 @@
-import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import { useAccount } from "@/providers/account";
+import { Redirect, Stack } from "expo-router";
+import React from "react";
 import { SafeAreaView, Text, View } from "react-native";
 
-export default function SplashScreen() {
-  const router = useRouter();
+export default function RootLayout() {
+  const { user, loading } = useAccount();
 
-  useEffect(() => {
-    checkAuthenticationStatus();
-  }, []);
+  if (loading) {
+    return <SplashScreen />;
+  }
 
-  const checkAuthenticationStatus = async () => {
-    try {
-      // Simulate app initialization
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
 
-      // Check if user is already authenticated
-      const isAuthenticated = await checkUserSession();
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
 
-      if (isAuthenticated) {
-        router.replace("/board");
-      } else {
-        router.replace("/login");
-      }
-    } catch (error) {
-      console.error("Initialization error:", error);
-      router.replace("/login");
-    }
-  };
-
-  const checkUserSession = async () => {
-    try {
-      // This would typically check for stored auth tokens or session
-      // For demo purposes, we'll return false to show login screen
-      return false;
-    } catch (error) {
-      console.error("Session check error:", error);
-      return false;
-    }
-  };
-
+function SplashScreen() {
   return (
     <SafeAreaView
       style={{

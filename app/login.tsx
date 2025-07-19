@@ -1,3 +1,5 @@
+import calljmp from "@/common/calljmp";
+import { useAccount } from "@/providers/account";
 import {
   ServiceError,
   ServiceErrorCode,
@@ -15,19 +17,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import calljmp from "../common/calljmp";
 
-/**
- * Authentication screen using Calljmp email/password authentication
- * Supports both sign-in and registration with the same form
- */
 export default function LoginScreen() {
   const [email, setEmail] = useState("jonny@test.com");
+  const [name, setName] = useState("Jonny Test");
   const [password, setPassword] = useState("Hj#137163$");
   const [isSigning, setIsSigning] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { setUser } = useAccount();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -39,20 +38,19 @@ export default function LoginScreen() {
     setError("");
 
     try {
-      const { data: user, error } = await calljmp.users.auth.email.authenticate(
-        {
-          email,
-          password,
-          tags: ["role:user"],
-          policy: UserAuthenticationPolicy.SignInExistingOnly,
-        }
-      );
+      const { data, error } = await calljmp.users.auth.email.authenticate({
+        email,
+        password,
+        tags: ["role:member"],
+        policy: UserAuthenticationPolicy.SignInExistingOnly,
+      });
 
       if (error) {
         throw error;
       }
 
-      router.replace("/board");
+      setUser(data.user);
+      router.replace("/");
     } catch (err) {
       if (err instanceof ServiceError) {
         if (err.code === ServiceErrorCode.UserNotFound) {
@@ -69,7 +67,7 @@ export default function LoginScreen() {
   };
 
   const handleRegister = async () => {
-    if (!email || !password) {
+    if (!email || !name || !password) {
       setError("Please fill in all fields");
       return;
     }
@@ -78,20 +76,20 @@ export default function LoginScreen() {
     setError("");
 
     try {
-      const { data: user, error } = await calljmp.users.auth.email.authenticate(
-        {
-          email,
-          password,
-          tags: ["role:user"],
-          policy: UserAuthenticationPolicy.CreateNewOnly,
-        }
-      );
+      const { data, error } = await calljmp.users.auth.email.authenticate({
+        email,
+        name,
+        password,
+        tags: ["role:member"],
+        policy: UserAuthenticationPolicy.CreateNewOnly,
+      });
 
       if (error) {
         throw error;
       }
 
-      router.replace("/board");
+      setUser(data.user);
+      router.replace("/");
     } catch (err) {
       if (err instanceof ServiceError) {
         if (err.code === ServiceErrorCode.UserAlreadyExists) {
@@ -182,7 +180,37 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                editable={!isSigning}
+                editable={!isSigning && !isRegistering}
+              />
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: 8,
+                }}
+              >
+                Name
+              </Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#e5e7eb",
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 16,
+                  backgroundColor: "#ffffff",
+                  color: "#1f2937",
+                }}
+                placeholder="Enter your name"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                editable={!isSigning && !isRegistering}
               />
             </View>
 
@@ -212,7 +240,7 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
-                editable={!isSigning}
+                editable={!isSigning && !isRegistering}
               />
             </View>
 
