@@ -6,7 +6,6 @@ interface PostCardProps {
   post: Post;
   onReaction: (postId: number, type: "heart" | "thumbsUp") => void;
   onDelete?: (postId: number) => void;
-  isAdmin?: boolean;
 }
 
 /**
@@ -17,7 +16,6 @@ export default function PostCard({
   post,
   onReaction,
   onDelete,
-  isAdmin,
 }: PostCardProps) {
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
@@ -108,7 +106,7 @@ export default function PostCard({
             </Text>
           </View>
         </View>
-        {isAdmin && onDelete && (
+        {onDelete && (
           <TouchableOpacity
             style={{
               paddingHorizontal: 10,

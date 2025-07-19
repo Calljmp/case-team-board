@@ -75,118 +75,117 @@ export default function BoardScreen() {
   }, []);
 
   useEffect(() => {
-    const subscriptions: DatabaseSubscription[] = [];
+    let reactions: DatabaseSubscription | null = null;
+    let posts: DatabaseSubscription | null = null;
 
     const subscribe = async () => {
-      subscriptions.push(
-        await calljmp.database
-          .observe<{
-            id: number;
-            author: number;
-            title: string;
-            content: string;
-            created_at: string;
-          }>("posts")
-          .on("insert", async (event) => {
-            const newPosts: Post[] = [];
-            for (const row of event.rows) {
-              const info = await fetchPostInfo(row.id);
-              if (!info) continue;
-              newPosts.push({
-                id: row.id,
-                title: row.title,
-                content: row.content,
-                createdAt: new Date(row.created_at),
-                author: info.author,
-                reactions: info.reactions,
-              });
-            }
-            setPosts((prevPosts) => [...newPosts, ...prevPosts]);
-          })
-          .on("delete", (event) => {
-            setPosts((prevPosts) =>
-              prevPosts.filter(
-                (post) => !event.rows.some((row) => row.id === post.id)
-              )
-            );
-          })
-          .subscribe()
-      );
+      posts = await calljmp.database
+        .observe<{
+          id: number;
+          author: number;
+          title: string;
+          content: string;
+          created_at: string;
+        }>("posts")
+        .on("insert", async (event) => {
+          const newPosts: Post[] = [];
+          for (const row of event.rows) {
+            const info = await fetchPostInfo(row.id);
+            if (!info) continue;
+            newPosts.push({
+              id: row.id,
+              title: row.title,
+              content: row.content,
+              createdAt: new Date(row.created_at),
+              author: info.author,
+              reactions: info.reactions,
+            });
+          }
+          setPosts((prevPosts) => [...newPosts, ...prevPosts]);
+        })
+        .on("delete", (event) => {
+          setPosts((prevPosts) =>
+            prevPosts.filter(
+              (post) => !event.rows.some((row) => row.id === post.id)
+            )
+          );
+        })
+        .subscribe();
 
-      subscriptions.push(
-        await calljmp.database
-          .observe<{
-            post_id: number;
-            type: "heart" | "thumbsUp";
-            user_id: number;
-            created_at: string;
-          }>("reactions")
-          .on("insert", (event) => {
-            setPosts((prevPosts) =>
-              prevPosts.map((post) => {
-                for (const row of event.rows) {
-                  if (post.id === row.post_id) {
-                    return {
-                      ...post,
-                      reactions: {
-                        ...post.reactions,
-                        [row.type]: (post.reactions[row.type] || 0) + 1,
-                      },
-                    };
-                  }
+      reactions = await calljmp.database
+        .observe<{
+          post_id: number;
+          type: "heart" | "thumbsUp";
+          user_id: number;
+          created_at: string;
+        }>("reactions")
+        .on("insert", (event) => {
+          setPosts((prevPosts) =>
+            prevPosts.map((post) => {
+              for (const row of event.rows) {
+                if (post.id === row.post_id) {
+                  return {
+                    ...post,
+                    reactions: {
+                      ...post.reactions,
+                      [row.type]: (post.reactions[row.type] || 0) + 1,
+                    },
+                  };
                 }
-                return post;
-              })
-            );
+              }
+              return post;
+            })
+          );
+          setRecentReactions((prev) =>
+            prev.concat(
+              event.rows.map((row) => ({
+                type: row.type,
+                postId: row.post_id,
+                userId: row.user_id,
+                createdAt: new Date(row.created_at),
+              }))
+            )
+          );
+          setTimeout(() => {
             setRecentReactions((prev) =>
-              prev.concat(
-                event.rows.map((row) => ({
-                  type: row.type,
-                  postId: row.post_id,
-                  userId: row.user_id,
-                  createdAt: new Date(row.created_at),
-                }))
+              prev.filter(
+                (r) =>
+                  !event.rows.some(
+                    (row) => r.postId === row.post_id && r.type === row.type
+                  )
               )
             );
-            setTimeout(() => {
-              setRecentReactions((prev) =>
-                prev.filter(
-                  (r) =>
-                    !event.rows.some(
-                      (row) => r.postId === row.post_id && r.type === row.type
-                    )
-                )
-              );
-            }, 2000);
-          })
-          .on("delete", (event) => {
-            setPosts((prevPosts) =>
-              prevPosts.map((post) => {
-                for (const row of event.rows) {
-                  if (post.id === row.post_id) {
-                    return {
-                      ...post,
-                      reactions: {
-                        ...post.reactions,
-                        [row.type]: Math.max(
-                          (post.reactions[row.type] || 0) - 1,
-                          0
-                        ),
-                      },
-                    };
-                  }
+          }, 2000);
+        })
+        .on("delete", (event) => {
+          setPosts((prevPosts) =>
+            prevPosts.map((post) => {
+              for (const row of event.rows) {
+                if (post.id === row.post_id) {
+                  return {
+                    ...post,
+                    reactions: {
+                      ...post.reactions,
+                      [row.type]: Math.max(
+                        (post.reactions[row.type] || 0) - 1,
+                        0
+                      ),
+                    },
+                  };
                 }
-                return post;
-              })
-            );
-          })
-          .subscribe()
-      );
+              }
+              return post;
+            })
+          );
+        })
+        .subscribe();
     };
 
     subscribe();
+
     return () => {
-      subscriptions.forEach((sub) => sub.unsubscribe());
+      reactions?.unsubscribe();
+      posts?.unsubscribe();
     };
   }, []);
 
@@ -325,8 +324,7 @@ export default function BoardScreen() {
     <PostCard
       post={item}
       onReaction={handleReaction}
-      onDelete={handleDeletePost}
-      isAdmin={true}
+      onDelete={item.author.id === user?.id ? handleDeletePost : undefined}
     />
   );
 
