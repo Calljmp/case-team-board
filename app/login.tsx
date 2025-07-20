@@ -20,7 +20,6 @@ import {
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("jonny@test.com");
-  const [name, setName] = useState("Jonny Test");
   const [password, setPassword] = useState("Hj#137163$");
   const [isSigning, setIsSigning] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -67,7 +66,7 @@ export default function LoginScreen() {
   };
 
   const handleRegister = async () => {
-    if (!email || !name || !password) {
+    if (!email || !password) {
       setError("Please fill in all fields");
       return;
     }
@@ -78,7 +77,6 @@ export default function LoginScreen() {
     try {
       const { data, error } = await calljmp.users.auth.email.authenticate({
         email,
-        name,
         password,
         tags: ["role:member"],
         policy: UserAuthenticationPolicy.CreateNewOnly,
@@ -180,36 +178,6 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                editable={!isSigning && !isRegistering}
-              />
-            </View>
-
-            <View style={{ marginBottom: 20 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "500",
-                  color: "#374151",
-                  marginBottom: 8,
-                }}
-              >
-                Name
-              </Text>
-              <TextInput
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#e5e7eb",
-                  borderRadius: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  fontSize: 16,
-                  backgroundColor: "#ffffff",
-                  color: "#1f2937",
-                }}
-                placeholder="Enter your name"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
                 editable={!isSigning && !isRegistering}
               />
             </View>

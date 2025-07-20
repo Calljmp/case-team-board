@@ -5,6 +5,7 @@ import RealtimeIndicator from "@/components/realtime-indicator";
 import { useAccount } from "@/providers/account";
 import { DatabaseSubscription } from "@calljmp/react-native";
 import { useRouter } from "expo-router";
+import { CircleUserRound } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -315,9 +316,8 @@ export default function BoardScreen() {
     router.push("/create-post");
   };
 
-  const handleLogout = async () => {
-    await calljmp.users.auth.clear();
-    setUser(null);
+  const handleProfile = () => {
+    router.push("/profile");
   };
 
   const renderPost = ({ item }: { item: Post }) => (
@@ -373,9 +373,9 @@ export default function BoardScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={{
-            backgroundColor: "#ef4444",
-            paddingHorizontal: 10,
-            paddingVertical: 10,
+            backgroundColor: "#007AFF",
+            paddingHorizontal: 6,
+            paddingVertical: 6,
             borderRadius: 12,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 1 },
@@ -383,11 +383,9 @@ export default function BoardScreen() {
             shadowRadius: 3,
             elevation: 2,
           }}
-          onPress={handleLogout}
+          onPress={handleProfile}
         >
-          <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "500" }}>
-            ↗
-          </Text>
+          <CircleUserRound stroke="#ffffff" size={24} />
         </TouchableOpacity>
       </View>
     </View>
@@ -399,7 +397,6 @@ export default function BoardScreen() {
         alignItems: "center",
         paddingVertical: 60,
         paddingHorizontal: 32,
-        backgroundColor: "#ffffff",
       }}
     >
       <Text
@@ -464,7 +461,7 @@ export default function BoardScreen() {
           loading ? (
             <View style={{ padding: 20, alignItems: "center" }}>
               <Text style={{ color: "#6b7280", fontSize: 14 }}>
-                Loading more posts...
+                Loading posts...
               </Text>
             </View>
           ) : null
