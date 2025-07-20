@@ -1,11 +1,11 @@
 import calljmp from "@/common/calljmp";
 import { Post, Reaction, TypingIndicator } from "@/common/types";
+import Avatar from "@/components/avatar";
 import PostCard from "@/components/post-card";
 import RealtimeIndicator from "@/components/realtime-indicator";
 import { useAccount } from "@/providers/account";
 import { DatabaseSubscription } from "@calljmp/react-native";
 import { useRouter } from "expo-router";
-import { CircleUserRound } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -373,10 +373,6 @@ export default function BoardScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={{
-            backgroundColor: "#007AFF",
-            paddingHorizontal: 6,
-            paddingVertical: 6,
-            borderRadius: 12,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.1,
@@ -385,7 +381,7 @@ export default function BoardScreen() {
           }}
           onPress={handleProfile}
         >
-          <CircleUserRound stroke="#ffffff" size={24} />
+          <Avatar size={36} />
         </TouchableOpacity>
       </View>
     </View>

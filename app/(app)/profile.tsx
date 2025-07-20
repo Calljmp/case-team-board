@@ -1,4 +1,5 @@
 import calljmp from "@/common/calljmp";
+import Avatar from "@/components/avatar";
 import { useAccount } from "@/providers/account";
 import { router } from "expo-router";
 import { SquarePen } from "lucide-react-native";
@@ -52,15 +53,6 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const formatJoinDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -92,19 +84,33 @@ export default function ProfileScreen() {
             alignItems: "center",
             marginBottom: 24,
             paddingHorizontal: 4,
+            position: "relative",
           }}
         >
-          <TouchableOpacity
-            style={{ marginRight: 16 }}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={{ zIndex: 1 }} onPress={() => router.back()}>
             <Text style={{ fontSize: 16, color: "#007AFF", fontWeight: "500" }}>
               Back
             </Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 22, fontWeight: "600", color: "#1f2937" }}>
-            Profile
-          </Text>
+          <View
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              alignItems: "center",
+              zIndex: 0,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "600",
+                color: "#1f2937",
+              }}
+            >
+              Profile
+            </Text>
+          </View>
         </View>
 
         <View
@@ -121,22 +127,7 @@ export default function ProfileScreen() {
           }}
         >
           <View style={{ alignItems: "center", marginBottom: 24 }}>
-            <View
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: "#007AFF",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Text
-                style={{ fontSize: 24, fontWeight: "bold", color: "#ffffff" }}
-              >
-                {getInitials(user.name || "User")}
-              </Text>
-            </View>
+            <Avatar size={80} editable={true} />
           </View>
 
           <View style={{ gap: 20 }}>

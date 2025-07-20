@@ -1,4 +1,5 @@
 import { Post } from "@/common/types";
+import Avatar from "@/components/avatar";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -31,15 +32,6 @@ export default function PostCard({
       const diffInDays = Math.floor(diffInHours / 24);
       return `${diffInDays}d ago`;
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
@@ -75,20 +67,8 @@ export default function PostCard({
             paddingRight: 12,
           }}
         >
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "#0b77e6",
-              justifyContent: "center",
-              alignItems: "center",
-              marginRight: 12,
-            }}
-          >
-            <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "500" }}>
-              {getInitials(post.author.name || post.author.email || "")}
-            </Text>
+          <View style={{ marginRight: 12 }}>
+            <Avatar size={44} />
           </View>
           <View style={{ flex: 1 }}>
             <Text
