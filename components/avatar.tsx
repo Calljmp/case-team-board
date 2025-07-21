@@ -1,5 +1,5 @@
 import calljmp from "@/common/calljmp";
-import { useAccount } from "@/providers/account";
+import { User } from "@calljmp/react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Upload } from "lucide-react-native";
@@ -15,11 +15,15 @@ import {
 
 interface AvatarPickerProps {
   size?: number;
-  editable?: boolean;
+  user: User | null;
+  onUserUpdated?: (user: User) => void;
 }
 
-export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
-  const { user, setUser } = useAccount();
+export default function Avatar({
+  size = 80,
+  user,
+  onUserUpdated,
+}: AvatarPickerProps) {
   const [uploading, setUploading] = useState(false);
 
   const getInitials = (name: string) => {
@@ -61,7 +65,7 @@ export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
     mimeType?: string | null;
   }) => {
     if (!user) {
-      Alert.alert("Error", "User not found. Please log in again.");
+      Alert.alert("Error", "You must be logged in to upload an avatar.");
       return;
     }
 
@@ -106,7 +110,7 @@ export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
         throw updateError;
       }
 
-      setUser(newUser);
+      onUserUpdated?.(newUser);
     } catch (error) {
       console.error("Avatar upload error:", error);
       Alert.alert("Error", "Failed to upload avatar. Please try again.");
@@ -180,7 +184,7 @@ export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
         throw error;
       }
 
-      setUser(newUser);
+      onUserUpdated?.(newUser);
     } catch (error) {
       console.error("Avatar removal error:", error);
       Alert.alert("Error", "Failed to remove avatar. Please try again.");
@@ -247,7 +251,7 @@ export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
         </Text>
       )}
 
-      {editable && !uploading && (
+      {!!onUserUpdated && !uploading && (
         <View
           style={{
             position: "absolute",
@@ -275,7 +279,7 @@ export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
 
   return (
     <View style={{ alignItems: "center" }}>
-      {editable ? (
+      {!!onUserUpdated ? (
         <TouchableOpacity
           onPress={showAvatarActions}
           disabled={uploading}

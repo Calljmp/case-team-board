@@ -9,10 +9,6 @@ interface PostCardProps {
   onDelete?: (postId: number) => void;
 }
 
-/**
- * Individual post card with content, reactions, and admin controls
- * Displays user posts with heart/thumbs up interactions
- */
 export default function PostCard({
   post,
   onReaction,
@@ -68,7 +64,7 @@ export default function PostCard({
           }}
         >
           <View style={{ marginRight: 12 }}>
-            <Avatar size={44} />
+            <Avatar user={post.author} size={44} />
           </View>
           <View style={{ flex: 1 }}>
             <Text
@@ -139,19 +135,27 @@ export default function PostCard({
             style={{
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: "#f9fafb",
+              backgroundColor: post.reactions.heart.reacted
+                ? "#0b77e6"
+                : "#f9fafb",
               paddingHorizontal: 12,
               paddingVertical: 8,
               borderRadius: 20,
               minWidth: 60,
               borderWidth: 1,
-              borderColor: "#f3f4f6",
+              borderColor: post.reactions.heart.reacted ? "#0b77e6" : "#f3f4f6",
             }}
             onPress={() => onReaction(post.id, "heart")}
           >
             <Text style={{ fontSize: 16, marginRight: 6 }}>❤️</Text>
-            <Text style={{ fontSize: 14, color: "#6b7280", fontWeight: "500" }}>
-              {post.reactions.heart}
+            <Text
+              style={{
+                fontSize: 14,
+                color: post.reactions.heart.reacted ? "#ffffff" : "#6b7280",
+                fontWeight: "500",
+              }}
+            >
+              {post.reactions.heart.total}
             </Text>
           </TouchableOpacity>
 
@@ -159,19 +163,29 @@ export default function PostCard({
             style={{
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: "#f9fafb",
+              backgroundColor: post.reactions.thumbsUp.reacted
+                ? "#0b77e6"
+                : "#f9fafb",
               paddingHorizontal: 12,
               paddingVertical: 8,
               borderRadius: 20,
               minWidth: 60,
               borderWidth: 1,
-              borderColor: "#f3f4f6",
+              borderColor: post.reactions.thumbsUp.reacted
+                ? "#0b77e6"
+                : "#f3f4f6",
             }}
             onPress={() => onReaction(post.id, "thumbsUp")}
           >
             <Text style={{ fontSize: 16, marginRight: 6 }}>👍</Text>
-            <Text style={{ fontSize: 14, color: "#6b7280", fontWeight: "500" }}>
-              {post.reactions.thumbsUp}
+            <Text
+              style={{
+                fontSize: 14,
+                color: post.reactions.thumbsUp.reacted ? "#ffffff" : "#6b7280",
+                fontWeight: "500",
+              }}
+            >
+              {post.reactions.thumbsUp.total}
             </Text>
           </TouchableOpacity>
         </View>

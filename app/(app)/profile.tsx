@@ -127,7 +127,7 @@ export default function ProfileScreen() {
           }}
         >
           <View style={{ alignItems: "center", marginBottom: 24 }}>
-            <Avatar size={80} editable={true} />
+            <Avatar size={80} user={user} onUserUpdated={setUser} />
           </View>
 
           <View style={{ gap: 20 }}>

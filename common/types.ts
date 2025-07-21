@@ -7,15 +7,15 @@ export interface Post {
   author: User;
   createdAt: Date;
   reactions: {
-    heart: number;
-    thumbsUp: number;
+    heart: {
+      total: number;
+      reacted: boolean;
+    };
+    thumbsUp: {
+      total: number;
+      reacted: boolean;
+    };
   };
-}
-
-export interface TypingIndicator {
-  userId: string;
-  userName: string;
-  isTyping: boolean;
 }
 
 export interface Reaction {

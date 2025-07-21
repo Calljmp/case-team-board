@@ -40,7 +40,6 @@ export default function LoginScreen() {
       const { data, error } = await calljmp.users.auth.email.authenticate({
         email,
         password,
-        tags: ["role:member"],
         policy: UserAuthenticationPolicy.SignInExistingOnly,
       });
 

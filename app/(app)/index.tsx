@@ -1,9 +1,10 @@
 import calljmp from "@/common/calljmp";
-import { Post, Reaction, TypingIndicator } from "@/common/types";
+import { Post, Reaction } from "@/common/types";
 import Avatar from "@/components/avatar";
 import PostCard from "@/components/post-card";
-import RealtimeIndicator from "@/components/realtime-indicator";
+import Reactions from "@/components/reactions";
 import { useAccount } from "@/providers/account";
+import { usePresence } from "@/providers/presence";
 import { DatabaseSubscription } from "@calljmp/react-native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -19,12 +20,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function BoardScreen() {
   const router = useRouter();
-  const { user, setUser } = useAccount();
+  const { user } = useAccount();
+  const { usersOnline } = usePresence();
   const insets = useSafeAreaInsets();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [typingIndicators, setTypingIndicators] = useState<TypingIndicator[]>(
-    []
-  );
   const [recentReactions, setRecentReactions] = useState<Reaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,15 +36,18 @@ export default function BoardScreen() {
         SELECT
           users.id AS author_id,
           users.name AS author_name,
+          users.avatar AS author_avatar,
           users.tags AS author_tags,
           users.created_at AS author_created_at,
           COALESCE(SUM(CASE WHEN reactions.type = 'heart' THEN 1 ELSE 0 END), 0) AS heart_reactions,
-          COALESCE(SUM(CASE WHEN reactions.type = 'thumbsUp' THEN 1 ELSE 0 END), 0) AS thumbs_up_reactions
+          COALESCE(SUM(CASE WHEN reactions.type = 'thumbsUp' THEN 1 ELSE 0 END), 0) AS thumbs_up_reactions,
+          COALESCE(SUM(CASE WHEN reactions.type = 'heart' AND reactions.user_id = ? THEN 1 ELSE 0 END), 0) AS user_reacted_heart,
+          COALESCE(SUM(CASE WHEN reactions.type = 'thumbsUp' AND reactions.user_id = ? THEN 1 ELSE 0 END), 0) AS user_reacted_thumbs_up
         FROM posts
         JOIN users ON posts.author = users.id
         LEFT JOIN reactions ON posts.id = reactions.post_id
         WHERE posts.id = ?`,
-      params: [postId],
+      params: [user?.id || 0, user?.id || 0, postId],
     });
     if (error) {
       console.error("Error fetching post author:", error);
@@ -54,10 +56,13 @@ export default function BoardScreen() {
     const info = data.rows[0] as {
       author_id: number;
       author_name: string;
+      author_avatar: string | null;
       author_tags: string | null;
       author_created_at: string;
       heart_reactions: number;
       thumbs_up_reactions: number;
+      user_reacted_heart: number;
+      user_reacted_thumbs_up: number;
     };
     return {
       author: {
@@ -65,12 +70,18 @@ export default function BoardScreen() {
         name: info.author_name,
         email: null,
         tags: info.author_tags ? JSON.parse(info.author_tags) : null,
-        avatar: null,
+        avatar: info.author_avatar,
         createdAt: new Date(info.author_created_at),
       },
       reactions: {
-        heart: info.heart_reactions,
-        thumbsUp: info.thumbs_up_reactions,
+        heart: {
+          total: info.heart_reactions,
+          reacted: info.user_reacted_heart > 0,
+        },
+        thumbsUp: {
+          total: info.thumbs_up_reactions,
+          reacted: info.user_reacted_thumbs_up > 0,
+        },
       },
     };
   }, []);
@@ -129,7 +140,13 @@ export default function BoardScreen() {
                     ...post,
                     reactions: {
                       ...post.reactions,
-                      [row.type]: (post.reactions[row.type] || 0) + 1,
+                      [row.type]: {
+                        total: (post.reactions[row.type].total || 0) + 1,
+                        reacted:
+                          row.user_id === user?.id
+                            ? true
+                            : post.reactions[row.type].reacted,
+                      },
                     },
                   };
                 }
@@ -139,12 +156,14 @@ export default function BoardScreen() {
           );
           setRecentReactions((prev) =>
             prev.concat(
-              event.rows.map((row) => ({
-                type: row.type,
-                postId: row.post_id,
-                userId: row.user_id,
-                createdAt: new Date(row.created_at),
-              }))
+              event.rows
+                .filter((row) => row.user_id !== user?.id)
+                .map((row) => ({
+                  type: row.type,
+                  postId: row.post_id,
+                  userId: row.user_id,
+                  createdAt: new Date(row.created_at),
+                }))
             )
           );
           setTimeout(() => {
@@ -167,10 +186,16 @@ export default function BoardScreen() {
                     ...post,
                     reactions: {
                       ...post.reactions,
-                      [row.type]: Math.max(
-                        (post.reactions[row.type] || 0) - 1,
-                        0
-                      ),
+                      [row.type]: {
+                        total: Math.max(
+                          (post.reactions[row.type].total || 0) - 1,
+                          0
+                        ),
+                        reacted:
+                          row.user_id === user?.id
+                            ? false
+                            : post.reactions[row.type].reacted,
+                      },
                     },
                   };
                 }
@@ -206,17 +231,20 @@ export default function BoardScreen() {
               posts.created_at,
               users.id AS author_id,
               users.name AS author_name,
+              users.avatar AS author_avatar,
               users.tags AS author_tags,
               users.created_at AS author_created_at,
               COALESCE(SUM(CASE WHEN reactions.type = 'heart' THEN 1 ELSE 0 END), 0) AS heart_reactions,
-              COALESCE(SUM(CASE WHEN reactions.type = 'thumbsUp' THEN 1 ELSE 0 END), 0) AS thumbs_up_reactions
+              COALESCE(SUM(CASE WHEN reactions.type = 'thumbsUp' THEN 1 ELSE 0 END), 0) AS thumbs_up_reactions,
+              COALESCE(SUM(CASE WHEN reactions.type = 'heart' AND reactions.user_id = ? THEN 1 ELSE 0 END), 0) AS user_reacted_heart,
+              COALESCE(SUM(CASE WHEN reactions.type = 'thumbsUp' AND reactions.user_id = ? THEN 1 ELSE 0 END), 0) AS user_reacted_thumbs_up
             FROM posts
             JOIN users ON posts.author = users.id
             LEFT JOIN reactions ON posts.id = reactions.post_id
             GROUP BY posts.id
             ORDER BY posts.created_at DESC
             LIMIT ? OFFSET ?`,
-          params: [pageSize, pageOffset],
+          params: [user?.id || 0, user?.id || 0, pageSize, pageOffset],
         });
 
         if (error) {
@@ -233,13 +261,19 @@ export default function BoardScreen() {
             name: row.author_name,
             email: null,
             tags: row.author_tags ? JSON.parse(row.author_tags) : null,
-            avatar: null,
+            avatar: row.author_avatar,
             createdAt: new Date(row.author_created_at),
           },
           createdAt: new Date(row.created_at),
           reactions: {
-            heart: row.heart_reactions,
-            thumbsUp: row.thumbs_up_reactions,
+            heart: {
+              total: row.heart_reactions,
+              reacted: row.user_reacted_heart > 0,
+            },
+            thumbsUp: {
+              total: row.thumbs_up_reactions,
+              reacted: row.user_reacted_thumbs_up > 0,
+            },
           },
         }));
 
@@ -280,8 +314,8 @@ export default function BoardScreen() {
       return;
     }
 
-    const reacted =
-      posts.find((post) => post.id === postId)?.reactions[type] || 0;
+    const reacted = posts.find((post) => post.id === postId)?.reactions[type]
+      ?.reacted;
 
     if (reacted) {
       await calljmp.database.query({
@@ -351,6 +385,26 @@ export default function BoardScreen() {
             Welcome, {user.name || user.email}
           </Text>
         )}
+        <View
+          style={{
+            flexDirection: "row",
+            marginTop: 6,
+          }}
+        >
+          {[user, ...usersOnline]
+            .filter((user) => !!user)
+            .map((user, index) => (
+              <View
+                key={user.id}
+                style={{
+                  marginLeft: index > 0 ? -8 : 0,
+                  zIndex: usersOnline.length - index,
+                }}
+              >
+                <Avatar user={user} size={20} />
+              </View>
+            ))}
+        </View>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <TouchableOpacity
@@ -381,7 +435,7 @@ export default function BoardScreen() {
           }}
           onPress={handleProfile}
         >
-          <Avatar size={36} />
+          <Avatar user={user} size={36} />
         </TouchableOpacity>
       </View>
     </View>
@@ -464,10 +518,7 @@ export default function BoardScreen() {
         }
       />
 
-      <RealtimeIndicator
-        typingIndicators={typingIndicators}
-        recentReactions={recentReactions}
-      />
+      <Reactions recentReactions={recentReactions} />
     </View>
   );
 }
