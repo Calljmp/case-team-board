@@ -81,7 +81,7 @@ export default function Avatar({
           name: image.fileName || name,
           type,
         },
-        bucket: "bucket",
+        bucket: "media",
         key: `${user.id}/${name}`,
         description: "User avatar",
         type,
@@ -93,7 +93,7 @@ export default function Avatar({
 
       const { data: signed, error: signError } =
         await calljmp.storage.signPublicUrl({
-          bucket: "bucket",
+          bucket: "media",
           key: file.key,
           cacheTtl: 28 * 24 * 60 * 60, // 28 days
         });

@@ -21,6 +21,8 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   const [usersOnline, setUsersOnline] = useState<User[]>([]);
   const { user } = useAccount();
 
+  const authenticated = !!user;
+
   const publishPresence = async (online: boolean) => {
     if (!user) {
       return;
@@ -44,6 +46,8 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   useEffect(() => {
+    if (!authenticated) return;
+
     let presenceSubscription: RealtimeSubscription | null = null;
 
     const subscribe = async () => {
@@ -81,11 +85,14 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
     );
 
     subscribe();
+    publishPresence(true);
+
     return () => {
+      publishPresence(false);
       presenceSubscription?.unsubscribe();
       stateSubscription.remove();
     };
-  }, []);
+  }, [authenticated]);
 
   const value = useMemo(() => ({ usersOnline }), [usersOnline]);
 

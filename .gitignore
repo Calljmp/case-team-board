@@ -40,3 +40,5 @@ app-example
 .calljmp
 .service.env
 .env
+
+*metro.config.js

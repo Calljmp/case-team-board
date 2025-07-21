@@ -7,7 +7,7 @@ import { useAccount } from "@/providers/account";
 import { usePresence } from "@/providers/presence";
 import { DatabaseSubscription } from "@calljmp/react-native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -29,10 +29,12 @@ export default function BoardScreen() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
+  const initialFetchRef = useRef(false);
 
-  const fetchPostInfo = useCallback(async (postId: number) => {
-    const { data, error } = await calljmp.database.query({
-      sql: `
+  const fetchPostInfo = useCallback(
+    async (postId: number) => {
+      const { data, error } = await calljmp.database.query({
+        sql: `
         SELECT
           users.id AS author_id,
           users.name AS author_name,
@@ -47,44 +49,46 @@ export default function BoardScreen() {
         JOIN users ON posts.author = users.id
         LEFT JOIN reactions ON posts.id = reactions.post_id
         WHERE posts.id = ?`,
-      params: [user?.id || 0, user?.id || 0, postId],
-    });
-    if (error) {
-      console.error("Error fetching post author:", error);
-      return null;
-    }
-    const info = data.rows[0] as {
-      author_id: number;
-      author_name: string;
-      author_avatar: string | null;
-      author_tags: string | null;
-      author_created_at: string;
-      heart_reactions: number;
-      thumbs_up_reactions: number;
-      user_reacted_heart: number;
-      user_reacted_thumbs_up: number;
-    };
-    return {
-      author: {
-        id: info.author_id,
-        name: info.author_name,
-        email: null,
-        tags: info.author_tags ? JSON.parse(info.author_tags) : null,
-        avatar: info.author_avatar,
-        createdAt: new Date(info.author_created_at),
-      },
-      reactions: {
-        heart: {
-          total: info.heart_reactions,
-          reacted: info.user_reacted_heart > 0,
+        params: [user?.id || 0, user?.id || 0, postId],
+      });
+      if (error) {
+        console.error("Error fetching post author:", error);
+        return null;
+      }
+      const info = data.rows[0] as {
+        author_id: number;
+        author_name: string;
+        author_avatar: string | null;
+        author_tags: string | null;
+        author_created_at: string;
+        heart_reactions: number;
+        thumbs_up_reactions: number;
+        user_reacted_heart: number;
+        user_reacted_thumbs_up: number;
+      };
+      return {
+        author: {
+          id: info.author_id,
+          name: info.author_name,
+          email: null,
+          tags: info.author_tags ? JSON.parse(info.author_tags) : null,
+          avatar: info.author_avatar,
+          createdAt: new Date(info.author_created_at),
         },
-        thumbsUp: {
-          total: info.thumbs_up_reactions,
-          reacted: info.user_reacted_thumbs_up > 0,
+        reactions: {
+          heart: {
+            total: info.heart_reactions,
+            reacted: info.user_reacted_heart > 0,
+          },
+          thumbsUp: {
+            total: info.thumbs_up_reactions,
+            reacted: info.user_reacted_thumbs_up > 0,
+          },
         },
-      },
-    };
-  }, []);
+      };
+    },
+    [user?.id]
+  );
 
   useEffect(() => {
     let reactions: DatabaseSubscription | null = null;
@@ -213,7 +217,7 @@ export default function BoardScreen() {
       reactions?.unsubscribe();
       posts?.unsubscribe();
     };
-  }, []);
+  }, [fetchPostInfo, user?.id]);
 
   const fetchPosts = useCallback(
     async (pageOffset = 0, reset = false) => {
@@ -293,7 +297,7 @@ export default function BoardScreen() {
         setLoading(false);
       }
     },
-    [loading, hasMore]
+    [loading, hasMore, user?.id]
   );
 
   const loadMorePosts = useCallback(() => {
@@ -303,10 +307,13 @@ export default function BoardScreen() {
   }, [offset, loading, hasMore, fetchPosts]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !initialFetchRef.current) {
+      initialFetchRef.current = true;
       fetchPosts(0, true);
+    } else if (!user?.id) {
+      initialFetchRef.current = false;
     }
-  }, [user?.id]);
+  }, [user?.id, fetchPosts]);
 
   const handleReaction = async (postId: number, type: "heart" | "thumbsUp") => {
     if (!user?.id) {
