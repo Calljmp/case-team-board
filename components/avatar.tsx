@@ -165,15 +165,17 @@ export default function Avatar({ size = 80, editable }: AvatarPickerProps) {
     try {
       setUploading(true);
 
-      await calljmp.storage.delete({
-        bucket: "bucket",
-        key: user.avatar.split("/").pop() || "",
-      });
+      const { data: info, error: urlError } =
+        calljmp.storage.resolveSignedPublicUrl(user.avatar);
+      if (urlError) {
+        throw urlError;
+      }
+
+      await calljmp.storage.delete(info);
 
       const { data: newUser, error } = await calljmp.users.update({
         avatar: null,
       });
-
       if (error) {
         throw error;
       }
