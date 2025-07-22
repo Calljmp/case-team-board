@@ -84,16 +84,19 @@ This demo showcases:
    npm install
    ```
 
-2. **Start the development server**
+2. **Run on device/simulator**
+
+   For iOS:
 
    ```bash
-   npx expo start
+   npx expo run:ios
    ```
 
-3. **Run on device/simulator**
-   - Press `i` for iOS Simulator
-   - Press `a` for Android Emulator
-   - Scan QR code with Expo Go app for physical device
+   For Android:
+
+   ```bash
+   npx expo run:android
+   ```
 
 ## App Architecture
 
