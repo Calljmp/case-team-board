@@ -1,8 +1,7 @@
 import calljmp from "@/common/calljmp";
-import { Post, Reaction } from "@/common/types";
-import Avatar from "@/components/avatar";
-import PostCard from "@/components/post-card";
-import Reactions from "@/components/reactions";
+import { Post } from "@/common/types";
+import Avatar, { AvatarProps } from "@/components/avatar";
+import PostCard, { PostCardProps } from "@/components/post-card";
 import { useAccount } from "@/providers/account";
 import { usePresence } from "@/providers/presence";
 import { DatabaseSubscription } from "@calljmp/react-native";
@@ -10,6 +9,7 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
   FlatList,
   RefreshControl,
   Text,
@@ -24,7 +24,6 @@ export default function BoardScreen() {
   const { usersOnline } = usePresence();
   const insets = useSafeAreaInsets();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [recentReactions, setRecentReactions] = useState<Reaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -139,6 +138,7 @@ export default function BoardScreen() {
           setPosts((prevPosts) =>
             prevPosts.map((post) => {
               for (const row of event.rows) {
+                if (row.user_id === user?.id) continue;
                 if (post.id === row.post_id) {
                   return {
                     ...post,
@@ -146,10 +146,7 @@ export default function BoardScreen() {
                       ...post.reactions,
                       [row.type]: {
                         total: (post.reactions[row.type].total || 0) + 1,
-                        reacted:
-                          row.user_id === user?.id
-                            ? true
-                            : post.reactions[row.type].reacted,
+                        reacted: post.reactions[row.type].reacted,
                       },
                     },
                   };
@@ -158,33 +155,12 @@ export default function BoardScreen() {
               return post;
             })
           );
-          setRecentReactions((prev) =>
-            prev.concat(
-              event.rows
-                .filter((row) => row.user_id !== user?.id)
-                .map((row) => ({
-                  type: row.type,
-                  postId: row.post_id,
-                  userId: row.user_id,
-                  createdAt: new Date(row.created_at),
-                }))
-            )
-          );
-          setTimeout(() => {
-            setRecentReactions((prev) =>
-              prev.filter(
-                (r) =>
-                  !event.rows.some(
-                    (row) => r.postId === row.post_id && r.type === row.type
-                  )
-              )
-            );
-          }, 2000);
         })
         .on("delete", (event) => {
           setPosts((prevPosts) =>
             prevPosts.map((post) => {
               for (const row of event.rows) {
+                if (row.user_id === user?.id) continue;
                 if (post.id === row.post_id) {
                   return {
                     ...post,
@@ -195,10 +171,7 @@ export default function BoardScreen() {
                           (post.reactions[row.type].total || 0) - 1,
                           0
                         ),
-                        reacted:
-                          row.user_id === user?.id
-                            ? false
-                            : post.reactions[row.type].reacted,
+                        reacted: post.reactions[row.type].reacted,
                       },
                     },
                   };
@@ -324,6 +297,27 @@ export default function BoardScreen() {
     const reacted = posts.find((post) => post.id === postId)?.reactions[type]
       ?.reacted;
 
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            reactions: {
+              ...post.reactions,
+              [type]: {
+                total: Math.max(
+                  (post.reactions[type].total || 0) + (reacted ? -1 : 1),
+                  0
+                ),
+                reacted: !reacted,
+              },
+            },
+          };
+        }
+        return post;
+      })
+    );
+
     if (reacted) {
       await calljmp.database.query({
         sql: "DELETE FROM reactions WHERE post_id = ? AND type = ?",
@@ -362,7 +356,7 @@ export default function BoardScreen() {
   };
 
   const renderPost = ({ item }: { item: Post }) => (
-    <PostCard
+    <AnimatedPostCard
       post={item}
       onReaction={handleReaction}
       onDelete={item.author.id === user?.id ? handleDeletePost : undefined}
@@ -404,11 +398,11 @@ export default function BoardScreen() {
               <View
                 key={user.id}
                 style={{
-                  marginLeft: index > 0 ? -8 : 0,
+                  marginLeft: index > 0 ? -4 : 0,
                   zIndex: usersOnline.length - index,
                 }}
               >
-                <Avatar user={user} size={20} />
+                <AnimatedAvatar user={user} size={20} />
               </View>
             ))}
         </View>
@@ -524,8 +518,57 @@ export default function BoardScreen() {
           ) : null
         }
       />
-
-      <Reactions recentReactions={recentReactions} />
     </View>
+  );
+}
+
+function AnimatedAvatar(props: AvatarProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 1.5,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Avatar {...props} />
+    </Animated.View>
+  );
+}
+
+function AnimatedPostCard(props: PostCardProps) {
+  const translateX = useRef(new Animated.Value(50)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ transform: [{ translateX }], opacity }}>
+      <PostCard {...props} />
+    </Animated.View>
   );
 }

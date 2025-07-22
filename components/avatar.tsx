@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 
-interface AvatarPickerProps {
+export interface AvatarProps {
   size?: number;
   user: User | null;
   onUserUpdated?: (user: User) => void;
@@ -23,7 +23,7 @@ export default function Avatar({
   size = 80,
   user,
   onUserUpdated,
-}: AvatarPickerProps) {
+}: AvatarProps) {
   const [uploading, setUploading] = useState(false);
 
   const getInitials = (name: string) => {
@@ -223,6 +223,11 @@ export default function Avatar({
     alignItems: "center" as const,
     backgroundColor: user?.avatar ? "transparent" : "#007AFF",
     position: "relative" as const,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: size * 0.1,
+    elevation: 2,
+    shadowOffset: { width: 0, height: size * 0.05 },
   };
 
   const content = (

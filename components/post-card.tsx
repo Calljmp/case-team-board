@@ -1,9 +1,10 @@
 import { Post } from "@/common/types";
 import Avatar from "@/components/avatar";
+import ReactionButton from "@/components/reaction-button";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
-interface PostCardProps {
+export interface PostCardProps {
   post: Post;
   onReaction: (postId: number, type: "heart" | "thumbsUp") => void;
   onDelete?: (postId: number) => void;
@@ -131,63 +132,19 @@ export default function PostCard({
             gap: 12,
           }}
         >
-          <TouchableOpacity
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: post.reactions.heart.reacted
-                ? "#0b77e6"
-                : "#f9fafb",
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 20,
-              minWidth: 60,
-              borderWidth: 1,
-              borderColor: post.reactions.heart.reacted ? "#0b77e6" : "#f3f4f6",
-            }}
+          <ReactionButton
+            emoji="❤️"
+            count={post.reactions.heart.total}
+            reacted={post.reactions.heart.reacted}
             onPress={() => onReaction(post.id, "heart")}
-          >
-            <Text style={{ fontSize: 16, marginRight: 6 }}>❤️</Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: post.reactions.heart.reacted ? "#ffffff" : "#6b7280",
-                fontWeight: "500",
-              }}
-            >
-              {post.reactions.heart.total}
-            </Text>
-          </TouchableOpacity>
+          />
 
-          <TouchableOpacity
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: post.reactions.thumbsUp.reacted
-                ? "#0b77e6"
-                : "#f9fafb",
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 20,
-              minWidth: 60,
-              borderWidth: 1,
-              borderColor: post.reactions.thumbsUp.reacted
-                ? "#0b77e6"
-                : "#f3f4f6",
-            }}
+          <ReactionButton
+            emoji="👍"
+            count={post.reactions.thumbsUp.total}
+            reacted={post.reactions.thumbsUp.reacted}
             onPress={() => onReaction(post.id, "thumbsUp")}
-          >
-            <Text style={{ fontSize: 16, marginRight: 6 }}>👍</Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: post.reactions.thumbsUp.reacted ? "#ffffff" : "#6b7280",
-                fontWeight: "500",
-              }}
-            >
-              {post.reactions.thumbsUp.total}
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
     </View>
