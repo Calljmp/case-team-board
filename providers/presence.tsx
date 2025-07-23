@@ -55,6 +55,9 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
         .observe<PresenceData>(PresenceTopic)
         .on("data", (_topic, data) => {
           if (data.online) {
+            if (user) {
+              publishPresence(true);
+            }
             setUsersOnline((prev) =>
               prev.some((u) => u.id === data.user.id)
                 ? prev
