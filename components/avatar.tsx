@@ -224,7 +224,7 @@ export default function Avatar({
     backgroundColor: user?.avatar ? "transparent" : "#007AFF",
     position: "relative" as const,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: size * 0.1,
     elevation: 2,
     shadowOffset: { width: 0, height: size * 0.05 },
