@@ -18,9 +18,9 @@ export default function CreatePostScreen() {
   const { user } = useAccount();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [title, setTitle] = useState("How to create a post?");
+  const [title, setTitle] = useState("Friday Standup Summary");
   const [content, setContent] = useState(
-    "You can create a post by filling out the title and content fields."
+    "Feature flags are now live and working well. We’ve begun preparing the SDK for external use, including cleanup and docs. A bug with dark mode was found and is currently being fixed."
   );
   const [loading, setLoading] = useState(false);
 

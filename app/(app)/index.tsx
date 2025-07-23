@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Easing,
   FlatList,
   RefreshControl,
   Text,
@@ -28,7 +29,6 @@ export default function BoardScreen() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
-  const initialFetchRef = useRef(false);
 
   const fetchPostInfo = useCallback(
     async (postId: number) => {
@@ -279,15 +279,6 @@ export default function BoardScreen() {
     }
   }, [offset, loading, hasMore, fetchPosts]);
 
-  useEffect(() => {
-    if (user?.id && !initialFetchRef.current) {
-      initialFetchRef.current = true;
-      fetchPosts(0, true);
-    } else if (!user?.id) {
-      initialFetchRef.current = false;
-    }
-  }, [user?.id, fetchPosts]);
-
   const handleReaction = async (postId: number, type: "heart" | "thumbsUp") => {
     if (!user?.id) {
       Alert.alert("Error", "You must be logged in to react to a post");
@@ -386,26 +377,6 @@ export default function BoardScreen() {
             Welcome, {user.name || user.email}
           </Text>
         )}
-        <View
-          style={{
-            flexDirection: "row",
-            marginTop: 6,
-          }}
-        >
-          {[user, ...usersOnline]
-            .filter((user) => !!user)
-            .map((user, index) => (
-              <View
-                key={user.id}
-                style={{
-                  marginLeft: index > 0 ? -4 : 0,
-                  zIndex: usersOnline.length - index,
-                }}
-              >
-                <AnimatedAvatar user={user} size={20} />
-              </View>
-            ))}
-        </View>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <TouchableOpacity
@@ -518,6 +489,31 @@ export default function BoardScreen() {
           ) : null
         }
       />
+
+      <View
+        style={{
+          flexDirection: "row",
+          position: "absolute",
+          bottom: insets.bottom + 16,
+          left: 16,
+          right: 16,
+          justifyContent: "flex-start",
+          alignItems: "center",
+        }}
+      >
+        {[user, ...usersOnline]
+          .filter((user) => !!user)
+          .map((user, index) => (
+            <View
+              key={user.id}
+              style={{
+                marginLeft: index > 0 ? -16 : 0,
+              }}
+            >
+              <AnimatedAvatar user={user} size={42} />
+            </View>
+          ))}
+      </View>
     </View>
   );
 }
@@ -528,14 +524,16 @@ function AnimatedAvatar(props: AvatarProps) {
   useEffect(() => {
     Animated.sequence([
       Animated.timing(scale, {
-        toValue: 1.5,
+        toValue: 1.3,
         duration: 350,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.ease),
       }),
       Animated.timing(scale, {
         toValue: 1,
         duration: 350,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.ease),
       }),
     ]).start();
   }, []);
@@ -557,11 +555,13 @@ function AnimatedPostCard(props: PostCardProps) {
         toValue: 0,
         duration: 350,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.ease),
       }),
       Animated.timing(opacity, {
         toValue: 1,
         duration: 350,
         useNativeDriver: true,
+        easing: Easing.inOut(Easing.ease),
       }),
     ]).start();
   }, []);
